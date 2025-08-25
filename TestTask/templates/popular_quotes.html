@@ -1,0 +1,206 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<div class="popular-container">
+    <div class="popular-header">
+        <h1 class="popular-title">Топ-10 популярных цитат</h1>
+        <div class="sort-info">
+            <i class="fas fa-trophy"></i>
+            <span>Сортировка по количеству лайков</span>
+        </div>
+    </div>
+
+    <div class="quotes-grid">
+        {% for quote in top_quotes %}
+        <div class="quote-card popular-card">
+            <div class="quote-rank">
+                <span class="rank-number">#{{ forloop.counter }}</span>
+                <div class="likes-count">
+                    <i class="fas fa-heart"></i>
+                    {{ quote.total_likes }}
+                </div>
+            </div>
+
+            <div class="quote-content">
+                <p class="quote-text">"{{ quote.text }}"</p>
+                <div class="quote-meta">
+                    {% if quote.author %}
+                    <span class="quote-author">
+                        <i class="fas fa-user"></i>
+                        {{ quote.author }}
+                    </span>
+                    {% endif %}
+                    <span class="quote-source">
+                        <i class="fas fa-book"></i>
+                        {{ quote.source }}
+                    </span>
+                </div>
+            </div>
+
+            <div class="quote-actions">
+                <span class="views-count">
+                    <i class="fas fa-eye"></i>
+                    {{ quote.views_count }} просмотров
+                </span>
+            </div>
+        </div>
+        {% empty %}
+        <div class="empty-state">
+            <i class="fas fa-quote-right"></i>
+            <h3>Пока нет цитат</h3>
+            <p>Будьте первым, кто добавит цитату!</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<style>
+.popular-container {
+    max-width: 1000px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+}
+
+.popular-header {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.popular-title {
+    color: #333;
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    background: linear-gradient(135deg, #6366f1, #4f46e5);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.sort-info {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    color: #6b7280;
+    font-size: 1.1rem;
+}
+
+.quotes-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.popular-card {
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    border-left: 4px solid #f59e0b;
+    transition: all 0.3s ease;
+}
+
+.popular-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
+}
+
+.quote-rank {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #f1f5f9;
+}
+
+.rank-number {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #f59e0b;
+    background: #fffbeb;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+}
+
+.likes-count {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #ef4444;
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+.quote-content {
+    margin-bottom: 1.5rem;
+}
+
+.quote-text {
+    font-size: 1.2rem;
+    line-height: 1.6;
+    color: #374151;
+    margin-bottom: 1rem;
+    font-style: italic;
+}
+
+.quote-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    font-size: 0.9rem;
+    color: #6b7280;
+}
+
+.quote-author, .quote-source {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.quote-actions {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.views-count {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #9ca3af;
+    font-size: 0.9rem;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: #6b7280;
+}
+
+.empty-state i {
+    font-size: 4rem;
+    color: #e5e7eb;
+    margin-bottom: 1rem;
+}
+
+.empty-state h3 {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+    color: #374151;
+}
+
+@media (max-width: 768px) {
+    .popular-title {
+        font-size: 2rem;
+    }
+
+    .quote-meta {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .quote-rank {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+    }
+}
+</style>
+{% endblock %}

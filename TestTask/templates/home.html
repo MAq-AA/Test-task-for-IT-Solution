@@ -1,0 +1,220 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Цитата дня</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        .div-with-quote {
+            display: flex;
+          justify-content: center;
+          align-items: center;
+          height: 80vh;
+        }
+
+        .quote-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 24px;
+            padding: 40px 40px 20px 40px;
+            max-width: 600px;
+            width: 100%;
+            box-shadow:
+                0 20px 40px rgba(0, 0, 0, 0.1),
+                0 0 0 1px rgba(255, 255, 255, 0.2);
+            transition: transform 0.3s ease;
+        }
+
+
+        .quote-text {
+            font-size: 1.5rem;
+            line-height: 1.6;
+            color: #2d3748;
+            margin-bottom: 24px;
+            margin-left: 0;
+            position: relative;
+            font-weight: 500;
+        }
+
+        .quote-text::before {
+            content: '"';
+            font-size: 4rem;
+            color: #667eea;
+            opacity: 0.3;
+            position: absolute;
+            left: -20px;
+            top: -20px;
+            font-weight: 700;
+        }
+
+        .quote-author {
+            font-size: 1.1rem;
+            color: #4a5568;
+            text-align: right;
+            font-style: italic;
+            position: relative;
+            padding-right: 30px;
+        }
+
+        .quote-author::before {
+            content: "—";
+            margin-right: 8px;
+            color: #667eea;
+        }
+
+        @media (max-width: 768px) {
+            .quote-container {
+                padding: 30px 25px;
+                margin: 20px;
+            }
+
+            .quote-text {
+                font-size: 1.2rem;
+            }
+
+            .quote-text::before {
+                left: -20px;
+                font-size: 3rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .quote-text {
+                font-size: 1.1rem;
+            }
+
+            .quote-author {
+                font-size: 1rem;
+            }
+        }
+
+        svg:hover {
+          transform: scale(1.1);
+        }
+
+        svg:active {
+          transform: scale(0.95);
+        }
+
+        .vote-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            padding: 10px 0;
+            margin: 10px 0;
+        }
+
+        .views-count {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .vote-buttons {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .vote-button {
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .vote-button:hover {
+            transform: scale(1.1);
+        }
+
+        .vote-button:active {
+            transform: scale(0.95);
+        }
+
+        .vote-count {
+            font-weight: 500;
+            margin: 0 4px;
+        }
+
+        .like-count {
+            color: #4CAF50;
+        }
+
+        .dislike-count {
+            color: #F44336;
+        }
+    </style>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<div class="div-with-quote" id="quote-container-{{ quote.id }}">
+    <div class="quote-container">
+        <div class="quote-text">
+            {{ quote.text }}
+        </div>
+        <div class="quote-author">
+            {{ quote.source }}
+        </div>
+        <div class="vote-container">
+            <span class="views-count">Просмотры: {{ quote.views_count }}</span>
+            <span class="vote-buttons">
+                <svg class="vote-button like-button" onclick="toggleVote({{ quote.id }}, 'like')" width="24" height="24" viewBox="0 0 24 24" fill="#4CAF50">
+                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                </svg>
+                <span class="vote-count like-count" id="like-count-{{ quote.id }}">{{ likes }}</span>
+                <svg class="vote-button dislike-button" onclick="toggleVote({{ quote.id }}, 'dislike')" width="24" height="24" viewBox="0 0 24 24" fill="#F44336">
+                    <path d="M15 3H6c-.83 0-1.54.5-1.84 1.22l-3.02 7.05c-.09.23-.14.47-.14.73v2c0 1.1.9 2 2 2h6.31l-.95 4.57-.03.32c0 .41.17.79.44 1.06L9.83 23l6.58-6.59c.37-.36.59-.86.59-1.41V5c0-1.1-.9-2-2-2zm4 0v12h4V3h-4z"/>
+                </svg>
+                <span class="vote-count dislike-count" id="dislike-count-{{ quote.id }}">{{ dislikes }}</span>
+            </span>
+        </div>
+    </div>
+</div>
+<script>
+    function toggleVote(quoteId, action) {
+        $.ajax({
+            url: "{% url 'toggle_like_dislike' 0 %}".replace('0', quoteId),
+            method: "POST",
+            data: {
+                'action': action,
+                'csrfmiddlewaretoken': '{{ csrf_token }}'
+            },
+            statusCode: {
+                401: function(response) {
+                    // Перенаправляем на страницу входа
+                    window.location.href = response.responseJSON.redirect_url;
+                }
+            },
+            success: function(response) {
+                if (response.success) {
+                    $(`#like-count-${quoteId}`).text(response.likes);
+                    $(`#dislike-count-${quoteId}`).text(response.dislikes);
+
+                    if (response.user_vote === 1) {
+                        $(`.like-button[onclick*="${quoteId}"]`).css('fill', '#2E7D32');
+                        $(`.dislike-button[onclick*="${quoteId}"]`).css('fill', '#F44336');
+                    } else if (response.user_vote === -1) {
+                        $(`.like-button[onclick*="${quoteId}"]`).css('fill', '#4CAF50');
+                        $(`.dislike-button[onclick*="${quoteId}"]`).css('fill', '#C62828');
+                    } else {
+                        $(`.like-button[onclick*="${quoteId}"]`).css('fill', '#4CAF50');
+                        $(`.dislike-button[onclick*="${quoteId}"]`).css('fill', '#F44336');
+                    }
+                } else if (response.redirect_url) {
+                    window.location.href = response.redirect_url;
+                } else {
+                    console.error('Ошибка:', response.error);
+                    alert(response.error);
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Ошибка AJAX:', error);
+            }
+        });
+    }
+</script>
+
+{% endblock %}
