@@ -148,6 +148,53 @@
             color: var(--text-light);
             text-align: right;
         }
+
+        .messages {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 10000;
+            max-width: 300px;
+        }
+
+        .alert {
+            padding: 1rem 1.5rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+            box-shadow: var(--shadow);
+            opacity: 0;
+            transform: translateX(100px);
+            transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        .alert.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .alert-success {
+            background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);
+            color: white;
+            border: none;
+        }
+
+        .alert-error {
+            background: linear-gradient(135deg, #F44336 0%, #C62828 100%);
+            color: white;
+            border: none;
+        }
+
+        .alert-info {
+            background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+            color: white;
+            border: none;
+        }
+
+        .alert-warning {
+            background: linear-gradient(135deg, #FF9800 0%, #EF6C00 100%);
+            color: white;
+            border: none;
+        }
     </style>
     {% block extra_css %}{% endblock %}
 </head>
@@ -184,16 +231,23 @@
                 </li>
                 {% if user.is_authenticated %}
                     <li>
-                        <a class="nav-link" href="{% url 'logout' %}">Выйти</a>
+                        <a class="nav-link" href="{% url 'logout' %}">
+                            <i class="fas fa-sign-out-alt"></i>
+                            <span>Выйти</span>
+                        </a>
                     </li>
                 {% else %}
                     <li>
-                        <a class="nav-link" href="{% url 'login' %}">Войти</a>
+                        <a class="nav-link" href="{% url 'login' %}">
+                            <i class="fas fa-sign-in-alt"></i>
+                            <span>Войти</span>
+                        </a>
                     </li>
                 {% endif %}
             </ul>
         </nav>
     </header>
+
 
     <main class="content">
         {% block content %}
@@ -201,21 +255,14 @@
     </main>
 
     <script>
-        // JavaScript код из примера
         const mobileMenuButton = document.getElementById('mobileMenuButton');
         const navMenu = document.getElementById('navMenu');
 
         mobileMenuButton.addEventListener('click', () => {
             navMenu.classList.toggle('active');
-
             const icon = mobileMenuButton.querySelector('i');
-            if (navMenu.classList.contains('active')) {
-                icon.classList.remove('fa-bars');
-                icon.classList.add('fa-times');
-            } else {
-                icon.classList.remove('fa-times');
-                icon.classList.add('fa-bars');
-            }
+            icon.classList.toggle('fa-bars');
+            icon.classList.toggle('fa-times');
         });
 
         const navLinks = document.querySelectorAll('.nav-link');
@@ -226,6 +273,27 @@
                 mobileMenuButton.querySelector('i').classList.add('fa-bars');
             });
         });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const alerts = document.querySelectorAll('.alert');
+
+            alerts.forEach(alert => {
+                alert.classList.add('show');
+
+                setTimeout(() => {
+                    alert.classList.remove('show');
+                    setTimeout(() => {
+                        alert.remove();
+                    }, 500);
+                }, 3000);
+            });
+
+            if (alerts.length === 0) {
+                document.getElementById('messages').style.display = 'none';
+            }
+        });
+
+
     </script>
 
     {% block extra_js %}{% endblock %}

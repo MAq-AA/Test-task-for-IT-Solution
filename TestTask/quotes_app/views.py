@@ -1,20 +1,30 @@
 from functools import wraps
-
-from django.contrib.auth.decorators import login_required
 from django.db import models
 from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
-from django.views.generic.edit import FormView
 from django.shortcuts import render, redirect
-
+from django.contrib import messages
 from .forms import AddQuoteForm
 from .models import Quote, Source, LikeDislike
-from django.http import JsonResponse, HttpResponse
+from django.http import JsonResponse
 import random
+from django.utils.http import url_has_allowed_host_and_scheme
+
+
+def get_safe_redirect_url(request, default_url=None):
+    next_url = request.GET.get('next') or request.session.get('next_url')
+
+    if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts=None):
+        return next_url
+    return default_url
 
 
 def add_quote(request):
+    if not request.user.is_authenticated:
+        request.session['next_url'] = request.get_full_path()
+        return redirect('login')
+
     if request.method == 'POST':
         form = AddQuoteForm(request.POST)
         if form.is_valid():
@@ -28,8 +38,12 @@ def add_quote(request):
                 weight=data['weight']
             )
             new_quote.save()
+            messages.success(request, 'Цитата успешно добавлена')
 
-            return redirect('add_quote')
+            next_url = get_safe_redirect_url(request, 'add_quote')
+            if 'next_url' in request.session:
+                del request.session['next_url']
+            return redirect(next_url)
     else:
         form = AddQuoteForm()
 
@@ -40,7 +54,7 @@ def home_page(request):
     selected_quote = weighted_random_quote()
 
     if selected_quote is None:
-        return HttpResponse("Нет доступной цитаты.", status=404)
+        return render(request, 'base.html')
 
     if selected_quote:
         selected_quote.views_count += 1
@@ -60,18 +74,12 @@ def home_page(request):
 
 
 def weighted_random_quote():
-    quotes = list(Quote.objects.all())
+    quotes = Quote.objects.all()
     if not quotes:
         return None
 
-    total_weight = sum(quote.weight for quote in quotes)
-    rand_val = random.uniform(0, total_weight)
-    current_sum = 0
-    for quote in quotes:
-        current_sum += quote.weight
-        if current_sum > rand_val:
-            return quote
-    return None
+    weights = [quote.weight for quote in quotes]
+    return random.choices(quotes, weights=weights, k=1)[0]
 
 
 def ajax_login_required(view_func):
@@ -140,5 +148,5 @@ def toggle_like_dislike(request, quote_id):
 
 
 def popular_quotes(request):
-    top_quotes = Quote.objects.annotate(total_likes=models.Sum('likedislike__value')).order_by('-total_likes')[:10]
+    top_quotes = Quote.objects.annotate(total_likes=models.Sum('likedislike__value', default=0)).order_by('-total_likes')[:10]
     return render(request, 'popular_quotes.html', {'top_quotes': top_quotes})

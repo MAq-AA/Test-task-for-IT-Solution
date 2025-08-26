@@ -28,11 +28,18 @@ def login_view(request):
             if user is not None:
                 login(request, user)
                 messages.success(request, f'Добро пожаловать, {username}!')
-                return redirect('home')
+                next_url = request.POST.get('next') or request.session.pop('next_url', None)
+                if next_url:
+                    return redirect(next_url)
+                return redirect(request.META.get('HTTP_REFERER', '/'))
     else:
         form = CustomAuthenticationForm()
 
-    return render(request, 'auth_app/login.html', {'form': form})
+    next_param = request.GET.get('next') or request.session.get('next_url')
+    return render(request, 'auth_app/login.html', {
+        'form': form,
+        'next': next_param
+    })
 
 @login_required
 def logout_view(request):

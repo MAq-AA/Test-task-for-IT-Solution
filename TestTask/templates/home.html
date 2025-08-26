@@ -151,6 +151,13 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
 <div class="div-with-quote" id="quote-container-{{ quote.id }}">
+    <div class="messages">
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">
+                <small>{{ message }}</small>
+            </div>
+        {% endfor %}
+    </div>
     <div class="quote-container">
         <div class="quote-text">
             {{ quote.text }}
@@ -184,7 +191,7 @@
             },
             statusCode: {
                 401: function(response) {
-                    // Перенаправляем на страницу входа
+
                     window.location.href = response.responseJSON.redirect_url;
                 }
             },
