@@ -40,10 +40,9 @@ def add_quote(request):
             new_quote.save()
             messages.success(request, 'Цитата успешно добавлена')
 
-            next_url = get_safe_redirect_url(request, 'add_quote')
             if 'next_url' in request.session:
                 del request.session['next_url']
-            return redirect(next_url)
+            return redirect('add_quote')
     else:
         form = AddQuoteForm()
 
@@ -82,37 +81,22 @@ def weighted_random_quote():
     return random.choices(quotes, weights=weights, k=1)[0]
 
 
-def ajax_login_required(view_func):
-    @wraps(view_func)
-    def wrapper(request, *args, **kwargs):
-        if not request.user.is_authenticated:
-            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                return JsonResponse({
-                    'success': False,
-                    'error': 'Требуется авторизация',
-                    'redirect_url': reverse('login') + f'?next={request.path}'
-                }, status=401)
-            else:
-                from django.contrib.auth.views import redirect_to_login
-                return redirect_to_login(request.path)
-        return view_func(request, *args, **kwargs)
-    return wrapper
-
-@ajax_login_required
 @require_POST
 @csrf_exempt
 def toggle_like_dislike(request, quote_id):
     if not request.user.is_authenticated:
+        request.session['next_url'] = request.META.get('HTTP_REFERER', '/')
+        login_url = f"{reverse('login')}"
+
         return JsonResponse({
             'success': False,
             'error': 'Требуется авторизация',
-            'redirect_url': reverse('login')  # Добавляем URL для редиректа
-        })
+            'redirect_url': login_url
+        }, status=401)
 
     try:
         quote = Quote.objects.get(id=quote_id)
         action = request.POST.get('action')
-
 
         like_dislike, created = LikeDislike.objects.get_or_create(
             user=request.user,

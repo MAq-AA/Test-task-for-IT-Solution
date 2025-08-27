@@ -182,46 +182,47 @@
 </div>
 <script>
     function toggleVote(quoteId, action) {
-        $.ajax({
-            url: "{% url 'toggle_like_dislike' 0 %}".replace('0', quoteId),
-            method: "POST",
-            data: {
-                'action': action,
-                'csrfmiddlewaretoken': '{{ csrf_token }}'
-            },
-            statusCode: {
-                401: function(response) {
+    $.ajax({
+        url: "{% url 'toggle_like_dislike' 0 %}".replace('0', quoteId),
+        method: "POST",
+        data: {
+            'action': action,
+            'csrfmiddlewaretoken': '{{ csrf_token }}'
+        },
+        success: function(response) {
+            if (response.success) {
+                $(`#like-count-${quoteId}`).text(response.likes);
+                $(`#dislike-count-${quoteId}`).text(response.dislikes);
 
-                    window.location.href = response.responseJSON.redirect_url;
-                }
-            },
-            success: function(response) {
-                if (response.success) {
-                    $(`#like-count-${quoteId}`).text(response.likes);
-                    $(`#dislike-count-${quoteId}`).text(response.dislikes);
-
-                    if (response.user_vote === 1) {
-                        $(`.like-button[onclick*="${quoteId}"]`).css('fill', '#2E7D32');
-                        $(`.dislike-button[onclick*="${quoteId}"]`).css('fill', '#F44336');
-                    } else if (response.user_vote === -1) {
-                        $(`.like-button[onclick*="${quoteId}"]`).css('fill', '#4CAF50');
-                        $(`.dislike-button[onclick*="${quoteId}"]`).css('fill', '#C62828');
-                    } else {
-                        $(`.like-button[onclick*="${quoteId}"]`).css('fill', '#4CAF50');
-                        $(`.dislike-button[onclick*="${quoteId}"]`).css('fill', '#F44336');
-                    }
-                } else if (response.redirect_url) {
-                    window.location.href = response.redirect_url;
+                if (response.user_vote === 1) {
+                    $(`.like-button[onclick*="${quoteId}"]`).css('fill', '#2E7D32');
+                    $(`.dislike-button[onclick*="${quoteId}"]`).css('fill', '#F44336');
+                } else if (response.user_vote === -1) {
+                    $(`.like-button[onclick*="${quoteId}"]`).css('fill', '#4CAF50');
+                    $(`.dislike-button[onclick*="${quoteId}"]`).css('fill', '#C62828');
                 } else {
-                    console.error('Ошибка:', response.error);
-                    alert(response.error);
+                    $(`.like-button[onclick*="${quoteId}"]`).css('fill', '#4CAF50');
+                    $(`.dislike-button[onclick*="${quoteId}"]`).css('fill', '#F44336');
                 }
-            },
-            error: function(xhr, status, error) {
-                console.error('Ошибка AJAX:', error);
+            } else if (response.redirect_url) {
+                window.location.href = response.redirect_url;
+            } else {
+                console.error('Ошибка:', response.error);
+                alert(response.error);
             }
-        });
-    }
+        },
+        error: function(xhr, status, error) {
+            if (xhr.status === 401) {
+                const currentUrl = window.location.href;
+                const loginUrl = "{% url 'login' %}?next=" + encodeURIComponent(currentUrl);
+                window.location.href = loginUrl;
+            } else {
+                console.error('Ошибка AJAX:', error);
+                alert('Произошла ошибка при голосовании');
+            }
+        }
+    });
+}
 </script>
 
 {% endblock %}

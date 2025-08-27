@@ -2,6 +2,8 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect
 from django.contrib.auth import login, authenticate, logout
 from django.contrib import messages
+from django.utils.http import url_has_allowed_host_and_scheme
+
 from .forms import CustomUserCreationForm, CustomAuthenticationForm
 
 def register_view(request):
@@ -28,17 +30,25 @@ def login_view(request):
             if user is not None:
                 login(request, user)
                 messages.success(request, f'Добро пожаловать, {username}!')
-                next_url = request.POST.get('next') or request.session.pop('next_url', None)
-                if next_url:
+
+                next_url = (
+                    request.POST.get('next') or
+                    request.GET.get('next') or
+                    request.session.pop('next_url', None)
+                )
+
+                if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts=None):
                     return redirect(next_url)
-                return redirect(request.META.get('HTTP_REFERER', '/'))
+
+                return redirect('home')
     else:
         form = CustomAuthenticationForm()
+        if 'next' in request.GET:
+            request.session['next_url'] = request.GET['next']
 
-    next_param = request.GET.get('next') or request.session.get('next_url')
     return render(request, 'auth_app/login.html', {
         'form': form,
-        'next': next_param
+        'next': request.GET.get('next', '')  # Передаем next параметр в шаблон
     })
 
 @login_required
